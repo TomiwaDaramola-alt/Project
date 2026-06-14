@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Collection — {{ config.BUSINESS_NAME }}{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div style="text-align: center; margin-bottom: 48px;">
+    <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.3em; color: var(--crimson);">Curated Selection</span>
+    <h1 style="font-style: italic; margin: 16px 0 8px;">The Collection</h1>
+    <p style="color: var(--text-muted); font-family: var(--font-accent); font-size: 18px;">Discover pieces that define your presence</p>
+</div>
+
+<!-- Top Filters Bar -->
+<div style="margin-bottom: 48px;">
+    <!-- Category Pills -->
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 24px;">
+        <a href="/shop" class="filter-pill {% if not category %}active{% endif %}">
+            <i class="fa-solid fa-border-all" style="margin-right: 6px;"></i>All
+        </a>
+        {% for cat in categories %}
+        <a href="/shop?category={{ cat.category }}" class="filter-pill {% if category == cat.category %}active{% endif %}">
+            {{ cat.category }}
+        </a>
+        {% endfor %}
+    </div>
+    
+    <!-- Search Bar -->
+    <form action="/shop" method="GET" style="max-width: 500px; margin: 0 auto; position: relative;">
+        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px;"></i>
+        <input type="text" name="search" placeholder="Search pieces..." value="{{ search or '' }}" 
+               style="width: 100%; padding: 14px 18px 14px 48px; background: var(--surface-wine); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); color: var(--cream); font-size: 14px; outline: none; transition: var(--transition-base);"
+               onfocus="this.style.borderColor='var(--crimson)'; this.style.boxShadow='0 0 0 3px rgba(196,30,58,0.1)'" 
+               onblur="this.style.borderColor='var(--border-subtle)'; this.style.boxShadow='none'">
+        {% if search %}
+        <a href="/shop" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted);">
+            <i class="fa-solid fa-xmark"></i>
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Results Count -->
+{% if category or search %}
+<div style="text-align: center; margin-bottom: 32px;">
+    <p style="color: var(--text-muted); font-size: 14px;">
+        {% if products.total > 0 %}
+        Showing {{ products.items|length }} of {{ products.total }} piece{% if products.total != 1 %}s{% endif %}
+        {% if category %}in <span style="color: var(--crimson);">{{ category }}</span>{% endif %}
+        {% if search %}for "<span style="color: var(--crimson);">{{ search }}</span>"{% endif %}
+        {% else %}
+        No pieces found
+        {% endif %}
+        <a href="/shop" style="color: var(--crimson); margin-left: 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Clear filters</a>
+    </p>
+</div>
+{% endif %}
+
+<!-- Product Grid -->
+<main>
+    {% if products.items %}
+    <div class="products-grid" style="grid-template-columns: repeat(4, 1fr);">
+        {% for product in products.items %}
+        <article class="product-card reveal">
+            <a href="/product/{{ product.id }}" style="display: block;">
+                <div class="product-image">
+                    <img src="{{ url_for('static', filename='images/uploads/' + product.image_file) }}" 
+                         alt="{{ product.name }}" loading="lazy">
+                    {% if product.is_new %}
+                    <span class="product-badge">New</span>
+                    {% endif %}
+                    {% if product.compare_price %}
+                    <span class="product-badge" style="background: var(--burgundy); left: auto; right: 12px;">
+                        <i class="fa-solid fa-tag" style="margin-right: 4px;"></i>Sale
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">{{ product.name }}</h3>
+                    <p class="product-category">{{ product.category }}</p>
+                    <p class="product-price">
+                        ₦{{ "%.0f"|format(product.price) }}
+                        {% if product.compare_price %}
+                        <span class="original">₦{{ "%.0f"|format(product.compare_price) }}</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </a>
+            <div class="product-actions">
+                <button class="btn-add" onclick="quickAdd({{ product.id }})" aria-label="Add to bag">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if products.pages > 1 %}
+    <div style="display: flex; justify-content: center; align-items: center; gap: 24px; margin-top: 64px;">
+        {% if products.has_prev %}
+        <a href="/shop?page={{ products.prev_num }}{% if category %}&category={{ category }}{% endif %}{% if search %}&search={{ search }}{% endif %}" class="btn btn-ghost">
+            <i class="fa-solid fa-arrow-left" style="margin-right: 8px;"></i> Previous
+        </a>
+        {% endif %}
+        
+        <div style="display: flex; gap: 8px;">
+            {% for page_num in range(1, products.pages + 1) %}
+                {% if page_num == products.page %}
+                <span style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--crimson); color: var(--cream); border-radius: 50%; font-size: 14px; font-weight: 600;">{{ page_num }}</span>
+                {% else %}
+                <a href="/shop?page={{ page_num }}{% if category %}&category={{ category }}{% endif %}{% if search %}&search={{ search }}{% endif %}" 
+                   style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--surface-wine); border: 1px solid var(--border-subtle); color: var(--text-secondary); border-radius: 50%; font-size: 14px; transition: var(--transition-fast);"
+                   onmouseover="this.style.borderColor='var(--crimson)'; this.style.color='var(--cream)'" 
+                   onmouseout="this.style.borderColor='var(--border-subtle)'; this.style.color='var(--text-secondary)'">{{ page_num }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+        
+        {% if products.has_next %}
+        <a href="/shop?page={{ products.next_num }}{% if category %}&category={{ category }}{% endif %}{% if search %}&search={{ search }}{% endif %}" class="btn btn-ghost">
+            Next <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- Empty State -->
+    <div style="text-align: center; padding: 100px 20px;">
+        <i class="fa-solid fa-bag-shopping" style="font-size: 64px; color: var(--text-faint); margin-bottom: 32px; display: block;"></i>
+        <h3 style="font-family: var(--font-display); font-size: 28px; font-style: italic; margin-bottom: 16px; color: var(--cream);">No Pieces Found</h3>
+        <p style="color: var(--text-muted); margin-bottom: 32px; font-size: 16px;">Try adjusting your search or browse all categories</p>
+        <a href="/shop" class="btn btn-primary">
+            <i class="fa-solid fa-border-all" style="margin-right: 8px;"></i> View All Pieces
+        </a>
+    </div>
+    {% endif %}
+</main>
+{% endblock %}

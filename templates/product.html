@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} — {{ config.BUSINESS_NAME }}{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start;">
+    <div class="product-image" style="border-radius: var(--radius-lg); overflow: hidden;">
+        <img src="{{ url_for('static', filename='images/uploads/' + product.image_file) }}" 
+             alt="{{ product.name }}" style="width: 100%; height: auto;">
+    </div>
+    
+    <div style="padding-top: 20px;">
+        <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--crimson);">{{ product.category }}</span>
+        <h1 style="font-style: italic; margin: 16px 0 24px;">{{ product.name }}</h1>
+        <p style="font-size: 28px; color: var(--crimson); font-family: var(--font-accent); margin-bottom: 24px;">
+            ₦{{ "%.0f"|format(product.price) }}
+            {% if product.compare_price %}
+            <span style="font-size: 18px; color: var(--text-faint); text-decoration: line-through; margin-left: 12px;">₦{{ "%.0f"|format(product.compare_price) }}</span>
+            {% endif %}
+        </p>
+        <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 40px;">{{ product.description }}</p>
+        
+        <form action="/add_to_cart/{{ product.id }}" method="POST">
+            <button type="submit" class="btn btn-primary btn-full" style="padding: 18px;">
+                <i class="fa-solid fa-plus" style="margin-right: 8px;"></i> Add to Bag
+            </button>
+        </form>
+        
+        <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border-subtle);">
+            <div style="display: flex; gap: 24px; color: var(--text-muted); font-size: 13px;">
+                <span><i class="fa-solid fa-truck" style="margin-right: 6px;"></i> Free shipping over ₦20k</span>
+                <span><i class="fa-solid fa-rotate-left" style="margin-right: 6px;"></i> 7-day returns</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

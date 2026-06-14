@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ config.BUSINESS_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+        <h1 style="font-style: italic;">Dashboard</h1>
+        <a href="/admin/logout" class="btn btn-ghost">
+            <i class="fa-solid fa-arrow-right-from-bracket" style="margin-right: 8px;"></i> Logout
+        </a>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="card" style="padding: 40px; text-align: center;">
+            <i class="fa-solid fa-shirt" style="font-size: 32px; color: var(--crimson); margin-bottom: 16px;"></i>
+            <p style="font-size: 48px; font-weight: 700; color: var(--cream); margin-bottom: 8px;">{{ total_products }}</p>
+            <p style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px;">Products</p>
+            <a href="/admin/products" class="btn btn-primary" style="margin-top: 24px;">Manage</a>
+        </div>
+        
+        <div class="card" style="padding: 40px; text-align: center;">
+            <i class="fa-solid fa-newspaper" style="font-size: 32px; color: var(--crimson); margin-bottom: 16px;"></i>
+            <p style="font-size: 48px; font-weight: 700; color: var(--cream); margin-bottom: 8px;">{{ total_news }}</p>
+            <p style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px;">News Items</p>
+            <a href="/admin/news" class="btn btn-primary" style="margin-top: 24px;">Manage</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

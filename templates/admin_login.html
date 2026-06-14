@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Admin — {{ config.BUSINESS_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 80px auto;">
+    <div class="card" style="padding: 48px;">
+        <div style="text-align: center; margin-bottom: 40px;">
+            <div class="logo-mark" style="margin: 0 auto 16px; width: 48px; height: 48px; font-size: 20px;">D</div>
+            <h2 style="font-style: italic;">Admin Access</h2>
+        </div>
+        
+        <form method="POST" action="/admin/login">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" placeholder="admin" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="••••••" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" style="padding: 16px;">
+                <i class="fa-solid fa-lock" style="margin-right: 8px;"></i> Sign In
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

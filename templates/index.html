@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<section class="hero">
+
+    <!-- Background Image -->
+    <div class="hero-bg">
+        <img src="{{ url_for('static', filename='images/2.jpg') }}"
+             alt="Luxury Fashion">
+    </div>
+
+    <!-- Hero Content -->
+    <div class="hero-content reveal">
+
+       <img src="{{ url_for('static', filename='images/logo.jpg') }}"
+     alt="DARMHIE'S Logo"
+     style="width:96px; height:96px; border-radius:50%; object-fit:cover;">
+
+        <span class="hero-label">Est. 2024 — Lagos, Nigeria</span>
+
+        <h1>DARMHIE'S <span>Collections</span></h1>
+
+        <p>
+            Where streetwear meets haute couture.
+            Curated pieces for those who dress with intention.
+        </p>
+
+        <div class="hero-actions">
+            <a href="/shop" class="btn btn-primary">
+                Explore Collection
+            </a>
+
+            <a href="/about" class="btn btn-secondary">
+                Our Story
+            </a>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- NEWS TICKER -->
+{% if news %}
+<section style="background: var(--wine-dark); padding: 12px 0; overflow: hidden; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle);">
+    <div class="ticker-wrap">
+        {% for item in news %}
+        <span class="ticker-item"><i class="fa-solid fa-bullhorn" style="margin-right: 8px; color: var(--crimson);"></i>{{ item.title }}</span>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- FEATURED COLLECTION -->
+{% if featured_products %}
+<section class="section">
+    <div class="section-header reveal">
+        <h2>Featured Pieces</h2>
+        <p>Handpicked from our latest drop</p>
+    </div>
+    <div class="products-grid stagger-children">
+        {% for product in featured_products %}
+        <article class="product-card reveal">
+            <div class="product-image">
+                <img src="{{ url_for('static', filename='images/uploads/' + product.image_file) }}" 
+                     alt="{{ product.name }}" loading="lazy">
+                {% if product.is_new %}
+                <span class="product-badge">New</span>
+                {% endif %}
+                <div class="product-actions">
+                    <button class="btn-add" onclick="quickAdd({{ product.id }})" aria-label="Add to bag">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">{{ product.name }}</h3>
+                <p class="product-category">{{ product.category }}</p>
+                <p class="product-price">
+                    ₦{{ "%.0f"|format(product.price) }}
+                    {% if product.compare_price %}
+                    <span class="original">₦{{ "%.0f"|format(product.compare_price) }}</span>
+                    {% endif %}
+                </p>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    <div style="text-align: center; margin-top: 48px;">
+        <a href="/shop" class="btn btn-secondary">
+            View All Pieces
+        </a>
+    </div>
+</section>
+{% endif %}
+
+<!-- BRAND STORY -->
+<section class="section" style="text-align: center; max-width: 800px; margin: 0 auto;">
+    <div class="reveal">
+        <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.3em; color: var(--crimson);">The Philosophy</span>
+        <h2 style="font-style: italic; margin: 24px 0;">Fashion is not something that exists in dresses only. Fashion is in the sky, in the street.</h2>
+        <p style="color: var(--text-muted); font-size: 16px; line-height: 1.8;">At DARMHIE'S, we believe luxury is not about price tags — it's about the confidence you wear. Every piece in our collection is selected to make you feel powerful, elegant, and unmistakably you.</p>
+        <a href="/about" class="line-draw" style="
+            display: inline-block;
+            margin-top: 32px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--cream);
+            padding-bottom: 4px;
+        ">Read Our Story</a>
+    </div>
+</section>
+
+<!-- PROMO SECTION -->
+<section class="section" style="
+    background: var(--surface-wine);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    padding: 64px 40px;
+    text-align: center;
+    margin: 0 -24px;
+">
+    <div class="reveal">
+        <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.3em; color: var(--crimson);">Complimentary Shipping</span>
+        <h2 style="font-size: clamp(28px, 4vw, 48px); margin: 16px 0;">On All Orders Over ₦20,000</h2>
+        <p style="color: var(--text-muted); margin-bottom: 32px;">Experience luxury delivery, straight to your door</p>
+        <a href="/shop" class="btn btn-primary">Shop Now</a>
+    </div>
+</section>
+{% endblock %}

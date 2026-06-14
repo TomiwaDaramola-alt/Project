@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Our Story — {{ config.BUSINESS_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; text-align: center;">
+    <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.3em; color: var(--crimson);">Est. 2024</span>
+    <h1 style="font-style: italic; margin: 24px 0 40px;">The DARMHIE'S Story</h1>
+    
+    <div style="display: grid; gap: 40px; text-align: left;">
+        <div class="card" style="padding: 40px;">
+            <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-fire" style="color: var(--crimson); margin-right: 12px;"></i>Our Vision</h3>
+            <p style="color: var(--text-muted); line-height: 1.8;">To redefine luxury streetwear in Nigeria and beyond. We believe that fashion is an expression of identity, and every piece we curate tells a story of boldness, elegance, and cultural pride.</p>
+        </div>
+        
+        <div class="card" style="padding: 40px;">
+            <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-gem" style="color: var(--crimson); margin-right: 12px;"></i>Our Promise</h3>
+            <p style="color: var(--text-muted); line-height: 1.8;">Every item in our collection is handpicked for quality, authenticity, and style. We partner with designers who share our passion for craftsmanship and attention to detail.</p>
+        </div>
+        
+        <div class="card" style="padding: 40px;">
+            <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-location-dot" style="color: var(--crimson); margin-right: 12px;"></i>Lagos to the World</h3>
+            <p style="color: var(--text-muted); line-height: 1.8;">Born in the heart of Lagos, DARMHIE'S represents the energy, creativity, and ambition of Nigerian fashion. We ship nationwide and are expanding globally.</p>
+        </div>
+    </div>
+    
+    <div style="margin-top: 60px;">
+        <a href="/shop" class="btn btn-primary">Shop the Collection</a>
+    </div>
+</div>
+{% endblock %}

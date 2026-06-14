@@ -1,0 +1,185 @@
+
+
+/* ==========================================================================
+   DARMHIE'S COLLECTIONS — MOBILE LUXURY OVERRIDES
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    /* === BASE === */
+    body {
+        font-size: 14px;
+    }
+    
+    .main-content {
+        padding: 85px 16px 100px;
+    }
+    
+    /* === NAV === */
+    .top-nav {
+        height: 60px;
+        padding: 0 16px;
+    }
+    
+    .nav-logo {
+        font-size: 18px;
+    }
+    
+    .logo-mark {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+    
+    /* === HERO === */
+    .hero {
+        margin: -85px -16px 0;
+        padding: 0 16px;
+        min-height: 80vh;
+    }
+    
+    .hero h1 {
+        font-size: 36px !important;
+    }
+    
+    .hero p {
+        font-size: 16px;
+    }
+    
+    .hero-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .hero-actions .btn {
+        width: 100%;
+        max-width: 280px;
+    }
+    
+    /* === PRODUCTS === */
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+    
+    .product-card {
+        border-radius: var(--radius-md);
+    }
+    
+    .product-image {
+        aspect-ratio: 3/4;
+    }
+    
+    .product-info {
+        padding: 12px;
+    }
+    
+    .product-name {
+        font-size: 14px;
+    }
+    
+    .product-price {
+        font-size: 16px;
+    }
+    
+    .product-actions {
+        opacity: 1;
+        transform: none;
+        position: static;
+        margin-top: 12px;
+    }
+    
+    .btn-add {
+        width: 100%;
+        height: 40px;
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+    }
+    
+    /* === CARDS === */
+    .card {
+        border-radius: var(--radius-md);
+    }
+    
+    /* === FORMS === */
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        padding: 12px 14px;
+        font-size: 16px; /* Prevents iOS zoom */
+    }
+    
+    /* === CART DRAWER === */
+    .cart-drawer {
+        max-width: 100%;
+    }
+    
+    /* === FOOTER === */
+    .main-footer {
+        padding: var(--space-2xl) var(--space-md) var(--space-md);
+        margin: 0 -16px -100px;
+    }
+    
+    .footer-grid {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-xl) !important;
+    }
+    
+    .footer-bottom {
+        flex-direction: column;
+        gap: var(--space-md);
+        text-align: center;
+    }
+    
+    /* === SECTIONS === */
+    .section {
+        margin-bottom: var(--space-2xl);
+    }
+    
+    .section-header {
+        margin-bottom: var(--space-xl);
+    }
+    
+    /* === BUTTONS === */
+    .btn {
+        padding: 12px 24px;
+        font-size: 12px;
+    }
+    
+    /* === NOTIFICATIONS === */
+    .toast-container {
+        right: 16px;
+        left: 16px;
+    }
+    
+    .notification {
+        min-width: auto;
+        width: 100%;
+    }
+}
+
+/* === TOUCH OPTIMIZATIONS === */
+@supports (padding-top: env(safe-area-inset-top)) {
+    .top-nav {
+        padding-top: env(safe-area-inset-top);
+        height: calc(70px + env(safe-area-inset-top));
+    }
+    .main-content {
+        padding-top: calc(100px + env(safe-area-inset-top));
+    }
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .bottom-nav {
+        padding-bottom: env(safe-area-inset-bottom);
+        height: calc(65px + env(safe-area-inset-bottom));
+    }
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

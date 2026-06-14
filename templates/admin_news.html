@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}News — {{ config.BUSINESS_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+        <h1 style="font-style: italic;">News Ticker</h1>
+        <a href="/admin/dashboard" class="btn btn-ghost">
+            <i class="fa-solid fa-arrow-left" style="margin-right: 8px;"></i> Back
+        </a>
+    </div>
+    
+    <!-- Add News -->
+    <div class="card" style="padding: 32px; margin-bottom: 40px;">
+        <form method="POST" action="/admin/add_news" style="display: flex; gap: 16px;">
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                <input type="text" name="title" placeholder="Enter news headline..." required>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-plus" style="margin-right: 8px;"></i> Add
+            </button>
+        </form>
+    </div>
+    
+    <!-- News List -->
+    <h3 style="margin-bottom: 24px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.15em;">All News</h3>
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for item in news %}
+        <div class="card" style="padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <i class="fa-solid fa-bullhorn" style="color: var(--crimson);"></i>
+                <span>{{ item.title }}</span>
+            </div>
+            <a href="/admin/delete_news/{{ item.id }}" class="btn btn-danger" style="padding: 8px 16px;" onclick="return confirm('Delete?')">
+                <i class="fa-solid fa-trash"></i>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

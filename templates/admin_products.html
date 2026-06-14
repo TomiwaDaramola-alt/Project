@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Products — {{ config.BUSINESS_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+        <div>
+            <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.3em; color: var(--crimson);">Inventory</span>
+            <h1 style="font-style: italic; margin-top: 8px;">Products</h1>
+        </div>
+        <a href="/admin/dashboard" class="btn btn-ghost">
+            <i class="fa-solid fa-arrow-left" style="margin-right: 8px;"></i> Back
+        </a>
+    </div>
+    
+    <!-- Add Product -->
+    <div class="card" style="padding: 40px; margin-bottom: 48px;">
+        <h3 style="margin-bottom: 32px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--cream);">
+            <i class="fa-solid fa-plus-circle" style="margin-right: 8px; color: var(--crimson);"></i> Add New Product
+        </h3>
+        <form method="POST" action="/admin/add_product" enctype="multipart/form-data">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" name="name" placeholder="e.g. Crimson Velvet Jacket" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <input type="text" name="category" placeholder="e.g. Outerwear" required>
+                </div>
+                <div class="form-group">
+                    <label>Price (₦)</label>
+                    <input type="number" name="price" placeholder="25000" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Compare Price (₦) <span style="color: var(--text-muted); font-weight: 400;">— optional sale price</span></label>
+                    <input type="number" name="compare_price" placeholder="35000" step="0.01">
+                </div>
+            </div>
+            
+            <!-- Image Upload -->
+            <div class="form-group">
+                <label>Product Image</label>
+                <div style="display: flex; gap: 16px; align-items: start;">
+                    <div style="flex: 1;">
+                        <input type="file" name="image_upload" accept="image/*" id="imageUpload" 
+                               style="display: none;" onchange="previewImage(this, 'previewAdd', 'fileName')">
+                        <button type="button" class="btn btn-ghost" onclick="document.getElementById('imageUpload').click()" style="margin-bottom: 12px;">
+                            <i class="fa-solid fa-cloud-arrow-up" style="margin-right: 8px;"></i> Choose Image
+                        </button>
+                        <p id="fileName" style="color: var(--text-muted); font-size: 13px; margin: 0;">
+                            <i class="fa-solid fa-image" style="margin-right: 6px;"></i> No file selected
+                        </p>
+                    </div>
+                    <img id="previewAdd" style="display: none; width: 100px; height: 125px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                </div>
+                <input type="hidden" name="image_file" id="imageFileName">
+            </div>
+            
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="4" placeholder="Describe the piece, materials, fit..." required></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--text-secondary); font-size: 14px; padding: 12px 16px; background: var(--surface-wine); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                    <input type="checkbox" name="is_new" value="1" style="width: 18px; height: 18px; accent-color: var(--crimson);">
+                    <i class="fa-solid fa-star" style="color: var(--crimson);"></i> Mark as New Arrival
+                </label>
+                <button type="submit" class="btn btn-primary" style="margin-left: auto;">
+                    <i class="fa-solid fa-plus" style="margin-right: 8px;"></i> Add Product
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Product List -->
+    <h3 style="margin-bottom: 24px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--cream);">
+        <i class="fa-solid fa-list" style="margin-right: 8px; color: var(--crimson);"></i> All Products ({{ products|length }})
+    </h3>
+    
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+        {% for product in products %}
+        <div class="card" style="padding: 24px;">
+            <div style="display: grid; grid-template-columns: 100px 1fr auto; gap: 24px; align-items: center;">
+                <img src="{{ url_for('static', filename='images/uploads/' + product.image_file) }}" 
+                     alt="{{ product.name }}" 
+                     style="width: 100px; height: 125px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                        <h4 style="font-family: var(--font-display); font-size: 20px; color: var(--cream);">{{ product.name }}</h4>
+                        {% if product.is_new %}
+                        <span style="padding: 4px 10px; background: rgba(196, 30, 58, 0.15); color: var(--crimson); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border-radius: var(--radius-sm);">
+                            <i class="fa-solid fa-star" style="margin-right: 4px;"></i> New
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 8px;">
+                        <i class="fa-solid fa-tag" style="margin-right: 6px; color: var(--burgundy);"></i>{{ product.category }}
+                    </p>
+                    <p style="font-family: var(--font-accent); font-size: 18px; color: var(--crimson);">
+                        ₦{{ "%.0f"|format(product.price) }}
+                        {% if product.compare_price %}
+                        <span style="color: var(--text-faint); text-decoration: line-through; margin-left: 8px; font-size: 14px;">₦{{ "%.0f"|format(product.compare_price) }}</span>
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="toggleEdit({{ product.id }})" class="btn btn-ghost" style="padding: 10px 16px;">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <a href="/admin/delete_product/{{ product.id }}" class="btn btn-danger" style="padding: 10px 16px;" onclick="return confirm('Delete {{ product.name }}? This cannot be undone.')">
+                        <i class="fa-solid fa-trash"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Edit Form -->
+            <div id="edit-{{ product.id }}" style="display: none; margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--border-subtle);">
+                <h4 style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--crimson); margin-bottom: 24px;">
+                    <i class="fa-solid fa-pen-to-square" style="margin-right: 8px;"></i> Edit Product
+                </h4>
+                <form method="POST" action="/admin/edit_product/{{ product.id }}" enctype="multipart/form-data">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" name="name" value="{{ product.name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <input type="text" name="category" value="{{ product.category }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Price</label>
+                            <input type="number" name="price" value="{{ product.price }}" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Compare Price</label>
+                            <input type="number" name="compare_price" value="{{ product.compare_price or '' }}" step="0.01">
+                        </div>
+                    </div>
+                    
+                    <!-- Image Upload in Edit -->
+                    <div class="form-group">
+                        <label>Product Image</label>
+                        <div style="display: flex; gap: 20px; align-items: start;">
+                            <img src="{{ url_for('static', filename='images/uploads/' + product.image_file) }}" 
+                                 style="width: 80px; height: 100px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                            <div style="flex: 1;">
+                                <input type="file" name="image_upload" accept="image/*" id="imageUpload{{ product.id }}" 
+                                       style="display: none;" onchange="previewImage(this, 'previewEdit{{ product.id }}', 'fileName{{ product.id }}')">
+                                <button type="button" class="btn btn-ghost" onclick="document.getElementById('imageUpload{{ product.id }}').click()" style="margin-bottom: 8px;">
+                                    <i class="fa-solid fa-cloud-arrow-up" style="margin-right: 8px;"></i> Change Image
+                                </button>
+                                <p id="fileName{{ product.id }}" style="color: var(--text-muted); font-size: 13px; margin: 0;">
+                                    <i class="fa-solid fa-image" style="margin-right: 6px;"></i> Keep current image or upload new
+                                </p>
+                                <img id="previewEdit{{ product.id }}" style="display: none; width: 80px; height: 100px; object-fit: cover; border-radius: var(--radius-sm); margin-top: 8px; border: 1px solid var(--border-subtle);">
+                            </div>
+                        </div>
+                        <input type="hidden" name="image_file" value="{{ product.image_file }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" rows="4" required>{{ product.description }}</textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 16px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--text-secondary); font-size: 14px; padding: 12px 16px; background: var(--surface-wine); border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                            <input type="checkbox" name="is_new" value="1" {% if product.is_new %}checked{% endif %} style="width: 18px; height: 18px; accent-color: var(--crimson);">
+                            <i class="fa-solid fa-star" style="color: var(--crimson);"></i> New Arrival
+                        </label>
+                        <button type="submit" class="btn btn-primary" style="margin-left: auto;">
+                            <i class="fa-solid fa-check" style="margin-right: 8px;"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function toggleEdit(id) {
+    let el = document.getElementById('edit-' + id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function previewImage(input, previewId, fileNameId) {
+    const file = input.files[0];
+    const fileNameEl = document.getElementById(fileNameId);
+    if (file) {
+        fileNameEl.innerHTML = '<i class="fa-solid fa-check" style="margin-right: 6px; color: var(--crimson);"></i> ' + file.name;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById(previewId);
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+</script>
+{% endblock %}

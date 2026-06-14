@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Checkout — {{ config.BUSINESS_NAME }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto;">
+    <h1 style="font-style: italic; margin-bottom: 40px;">Checkout</h1>
+    
+    <div class="card" style="padding: 32px; margin-bottom: 24px;">
+        <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--cream); margin-bottom: 24px;">Order Summary</h3>
+        {% for item in cart_items %}
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-subtle);">
+            <span style="color: var(--text-secondary);">{{ item.name }} x{{ item.qty }}</span>
+            <span style="color: var(--cream);">₦{{ "%.0f"|format(item.subtotal) }}</span>
+        </div>
+        {% endfor %}
+        <div style="display: flex; justify-content: space-between; padding-top: 20px; margin-top: 8px;">
+            <span style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 14px;">Total</span>
+            <span style="font-family: var(--font-accent); font-size: 28px; color: var(--crimson);">₦{{ "%.0f"|format(total) }}</span>
+        </div>
+    </div>
+    
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+        <button id="paystack-btn" class="btn btn-primary btn-full" style="padding: 20px; font-size: 15px;" onclick="payWithPaystack()">
+            <i class="fa-solid fa-credit-card" style="margin-right: 8px;"></i> Pay with Paystack
+        </button>
+        
+        <a href="{{ whatsapp_link }}" target="_blank" class="btn btn-secondary btn-full" style="padding: 20px; font-size: 15px; text-align: center;">
+            <i class="fa-brands fa-whatsapp" style="margin-right: 8px;"></i> Order on WhatsApp
+        </a>
+    </div>
+</div>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+    function payWithPaystack() {
+        let handler = PaystackPop.setup({
+            key: '{{ config.PAYSTACK_PUBLIC_KEY }}',
+            email: 'customer@email.com',
+            amount: {{ total * 100 }},
+            currency: 'NGN',
+            callback: function(response) {
+                showToast('Payment successful! Ref: ' + response.reference, 'success');
+                setTimeout(() => window.location.href = '/', 2000);
+            },
+            onClose: function() {
+                showToast('Payment cancelled', 'info');
+            }
+        });
+        handler.openIframe();
+    }
+</script>
+{% endblock %}
