@@ -18,10 +18,12 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-this")
 # DATABASE CONNECTION
 # ==============================
 def get_db():
-    return psycopg2.connect(
-        os.environ.get("DATABASE_URL"),
-        sslmode="require"
-    )
+    database_url = os.environ.get("DATABASE_URL")
+
+    if not database_url:
+        raise Exception("DATABASE_URL not set")
+
+    return psycopg2.connect(database_url, sslmode="require", connect_timeout=10)
 
 # ==============================
 # ADMIN PROTECTION
@@ -49,45 +51,49 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ==============================
-# SAFE DB INIT (NO AUTO CRASH)
+# SAFE DB INIT (RUN ONCE ONLY)
 # ==============================
 def init_db():
-    conn = get_db()
-    cur = conn.cursor()
+    try:
+        conn = get_db()
+        cur = conn.cursor()
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS products (
-            id SERIAL PRIMARY KEY,
-            name TEXT,
-            price NUMERIC,
-            compare_price NUMERIC,
-            description TEXT,
-            image_file TEXT,
-            category TEXT,
-            is_new INTEGER DEFAULT 0
-        )
-    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS products (
+                id SERIAL PRIMARY KEY,
+                name TEXT,
+                price NUMERIC,
+                compare_price NUMERIC,
+                description TEXT,
+                image_file TEXT,
+                category TEXT,
+                is_new INTEGER DEFAULT 0
+            )
+        """)
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS news (
-            id SERIAL PRIMARY KEY,
-            title TEXT
-        )
-    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS news (
+                id SERIAL PRIMARY KEY,
+                title TEXT
+            )
+        """)
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS admins (
-            id SERIAL PRIMARY KEY,
-            username TEXT UNIQUE,
-            password TEXT
-        )
-    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS admins (
+                id SERIAL PRIMARY KEY,
+                username TEXT UNIQUE,
+                password TEXT
+            )
+        """)
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        conn.commit()
+        cur.close()
+        conn.close()
 
-# RUN ON START (SAFE NOW)
+    except Exception as e:
+        print("DB init error:", e)
+
+# DO NOT CRASH APP ON START
 init_db()
 
 # ==============================
@@ -106,12 +112,7 @@ def index():
 
     conn.close()
 
-    return render_template(
-        "index.html",
-        featured_products=featured_products,
-        news=news,
-        config=globals()
-    )
+    return render_template("index.html", featured_products=featured_products, news=news, config=globals())
 
 # ==============================
 # SHOP
@@ -143,15 +144,10 @@ def shop():
 
     conn.close()
 
-    return render_template(
-        "shop.html",
-        products=products,
-        categories=categories,
-        config=globals()
-    )
+    return render_template("shop.html", products=products, categories=categories, config=globals())
 
 # ==============================
-# PRODUCT PAGE
+# PRODUCT
 # ==============================
 @app.route("/product/<int:id>")
 def product_detail(id):
@@ -225,14 +221,14 @@ def checkout():
 
         if p:
             subtotal = float(p[2]) * qty
-            items.append(p)
+            items.append({"name": p[1], "qty": qty})
             total += subtotal
 
     conn.close()
 
     msg = "Hello, I want to order:\n"
     for i in items:
-        msg += f"- {i[1]} x{qty}\n"
+        msg += f"- {i['name']} x{i['qty']}\n"
 
     whatsapp_link = f"https://wa.me/{WHATSAPP_NUMBER}?text={msg}"
 
@@ -280,15 +276,13 @@ def admin_dashboard():
 
     conn.close()
 
-    return render_template(
-        "admin_dashboard.html",
-        total_products=total_products,
-        total_news=total_news,
-        config=globals()
-    )
+    return render_template("admin_dashboard.html",
+                           total_products=total_products,
+                           total_news=total_news,
+                           config=globals())
 
 # ==============================
-# RUN APP
+# RUN
 # ==============================
 if __name__ == "__main__":
     app.run()
