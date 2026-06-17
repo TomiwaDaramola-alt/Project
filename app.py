@@ -4,30 +4,34 @@ import os
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-from config import *
 from AIbrain import get_response
 
 app = Flask(__name__)
 
-# ==============================
-# SECURITY CONFIG
-# ==============================
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-this")
+# =========================
+# SECURITY
+# =========================
+app.secret_key = os.environ.get("SECRET_KEY", "change-this-in-render")
 
-# ==============================
-# DATABASE CONNECTION
-# ==============================
+# =========================
+# DATABASE CONNECTION (FIXED)
+# =========================
 def get_db():
     database_url = os.environ.get("DATABASE_URL")
 
     if not database_url:
-        raise Exception("DATABASE_URL not set")
+        raise Exception("DATABASE_URL not set in Render environment variables")
 
-    return psycopg2.connect(database_url, sslmode="require", connect_timeout=10)
+    # Supabase fix (VERY IMPORTANT)
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
 
-# ==============================
+    return psycopg2.connect(database_url, sslmode="require")
+
+
+# =========================
 # ADMIN PROTECTION
-# ==============================
+# =========================
 def admin_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -36,9 +40,10 @@ def admin_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-# ==============================
+
+# =========================
 # UPLOAD CONFIG
-# ==============================
+# =========================
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "images", "uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 
@@ -47,58 +52,57 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# ==============================
-# SAFE DB INIT (RUN ONCE ONLY)
-# ==============================
+
+# =========================
+# INIT DB (SAFE)
+# =========================
 def init_db():
-    try:
-        conn = get_db()
-        cur = conn.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS products (
-                id SERIAL PRIMARY KEY,
-                name TEXT,
-                price NUMERIC,
-                compare_price NUMERIC,
-                description TEXT,
-                image_file TEXT,
-                category TEXT,
-                is_new INTEGER DEFAULT 0
-            )
-        """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            id SERIAL PRIMARY KEY,
+            name TEXT,
+            price NUMERIC,
+            compare_price NUMERIC,
+            description TEXT,
+            image_file TEXT,
+            category TEXT,
+            is_new INTEGER DEFAULT 0
+        )
+    """)
 
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS news (
-                id SERIAL PRIMARY KEY,
-                title TEXT
-            )
-        """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS news (
+            id SERIAL PRIMARY KEY,
+            title TEXT
+        )
+    """)
 
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS admins (
-                id SERIAL PRIMARY KEY,
-                username TEXT UNIQUE,
-                password TEXT
-            )
-        """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS admins (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE,
+            password TEXT
+        )
+    """)
 
-        conn.commit()
-        cur.close()
-        conn.close()
+    conn.commit()
+    cur.close()
+    conn.close()
 
-    except Exception as e:
-        print("DB init error:", e)
 
-# DO NOT CRASH APP ON START
 init_db()
 
-# ==============================
+
+# =========================
 # HOME
-# ==============================
+# =========================
 @app.route("/")
 def index():
     conn = get_db()
@@ -114,9 +118,10 @@ def index():
 
     return render_template("index.html", featured_products=featured_products, news=news, config=globals())
 
-# ==============================
+
+# =========================
 # SHOP
-# ==============================
+# =========================
 @app.route("/shop")
 def shop():
     conn = get_db()
@@ -146,9 +151,10 @@ def shop():
 
     return render_template("shop.html", products=products, categories=categories, config=globals())
 
-# ==============================
+
+# =========================
 # PRODUCT
-# ==============================
+# =========================
 @app.route("/product/<int:id>")
 def product_detail(id):
     conn = get_db()
@@ -161,9 +167,10 @@ def product_detail(id):
 
     return render_template("product.html", product=product, config=globals())
 
-# ==============================
+
+# =========================
 # CART
-# ==============================
+# =========================
 @app.route("/cart")
 def cart():
     cart = session.get("cart", {})
@@ -179,23 +186,27 @@ def cart():
             p = cur.fetchone()
 
             if p:
-                subtotal = float(p[2]) * qty
+                price = float(p[2])
+                subtotal = price * qty
+
                 items.append({
                     "id": pid,
                     "name": p[1],
-                    "price": float(p[2]),
+                    "price": price,
                     "qty": qty,
                     "subtotal": subtotal
                 })
+
                 total += subtotal
 
         conn.close()
 
     return render_template("cart.html", cart_items=items, total=total, config=globals())
 
-# ==============================
+
+# =========================
 # ADD TO CART
-# ==============================
+# =========================
 @app.route("/add_to_cart/<int:id>", methods=["POST"])
 def add_to_cart(id):
     cart = session.get("cart", {})
@@ -203,9 +214,10 @@ def add_to_cart(id):
     session["cart"] = cart
     return jsonify({"success": True})
 
-# ==============================
+
+# =========================
 # CHECKOUT
-# ==============================
+# =========================
 @app.route("/checkout")
 def checkout():
     cart = session.get("cart", {})
@@ -220,23 +232,25 @@ def checkout():
         p = cur.fetchone()
 
         if p:
-            subtotal = float(p[2]) * qty
-            items.append({"name": p[1], "qty": qty})
+            price = float(p[2])
+            subtotal = price * qty
+            items.append(p)
             total += subtotal
 
     conn.close()
 
     msg = "Hello, I want to order:\n"
     for i in items:
-        msg += f"- {i['name']} x{i['qty']}\n"
+        msg += f"- {i[1]} x{qty}\n"
 
-    whatsapp_link = f"https://wa.me/{WHATSAPP_NUMBER}?text={msg}"
+    whatsapp_link = f"https://wa.me/{os.environ.get('WHATSAPP_NUMBER', '')}?text={msg}"
 
     return render_template("checkout.html", cart_items=items, total=total, whatsapp_link=whatsapp_link, config=globals())
 
-# ==============================
-# ADMIN LOGIN
-# ==============================
+
+# =========================
+# ADMIN LOGIN (SIMPLE)
+# =========================
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
@@ -259,9 +273,10 @@ def admin_login():
 
     return render_template("admin_login.html", config=globals())
 
-# ==============================
+
+# =========================
 # ADMIN DASHBOARD
-# ==============================
+# =========================
 @app.route("/admin/dashboard")
 @admin_required
 def admin_dashboard():
@@ -276,13 +291,16 @@ def admin_dashboard():
 
     conn.close()
 
-    return render_template("admin_dashboard.html",
-                           total_products=total_products,
-                           total_news=total_news,
-                           config=globals())
+    return render_template(
+        "admin_dashboard.html",
+        total_products=total_products,
+        total_news=total_news,
+        config=globals()
+    )
 
-# ==============================
+
+# =========================
 # RUN
-# ==============================
+# =========================
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
