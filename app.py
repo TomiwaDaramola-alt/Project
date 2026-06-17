@@ -2,36 +2,29 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import psycopg2
 import os
 from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-from AIbrain import get_response
 
 app = Flask(__name__)
 
-# =========================
+# ==============================
 # SECURITY
-# =========================
-app.secret_key = os.environ.get("SECRET_KEY", "change-this-in-render")
+# ==============================
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-this")
 
-# =========================
+# ==============================
 # DATABASE CONNECTION (FIXED)
-# =========================
+# ==============================
 def get_db():
     database_url = os.environ.get("DATABASE_URL")
 
     if not database_url:
-        raise Exception("DATABASE_URL not set in Render environment variables")
+        raise Exception("DATABASE_URL is missing in environment variables")
 
-    # Supabase fix (VERY IMPORTANT)
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    return psycopg2.connect(database_url, sslmode="require", connect_timeout=10)
 
-    return psycopg2.connect(database_url, sslmode="require")
-
-
-# =========================
+# ==============================
 # ADMIN PROTECTION
-# =========================
+# ==============================
 def admin_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -40,69 +33,60 @@ def admin_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-
-# =========================
-# UPLOAD CONFIG
-# =========================
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "images", "uploads")
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
-
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-# =========================
-# INIT DB (SAFE)
-# =========================
+# ==============================
+# INIT DB (SAFE VERSION)
+# ==============================
 def init_db():
-    conn = get_db()
-    cur = conn.cursor()
+    try:
+        conn = get_db()
+        cur = conn.cursor()
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS products (
-            id SERIAL PRIMARY KEY,
-            name TEXT,
-            price NUMERIC,
-            compare_price NUMERIC,
-            description TEXT,
-            image_file TEXT,
-            category TEXT,
-            is_new INTEGER DEFAULT 0
-        )
-    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS products (
+                id SERIAL PRIMARY KEY,
+                name TEXT,
+                price NUMERIC,
+                compare_price NUMERIC,
+                description TEXT,
+                image_file TEXT,
+                category TEXT,
+                is_new INTEGER DEFAULT 0
+            )
+        """)
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS news (
-            id SERIAL PRIMARY KEY,
-            title TEXT
-        )
-    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS news (
+                id SERIAL PRIMARY KEY,
+                title TEXT
+            )
+        """)
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS admins (
-            id SERIAL PRIMARY KEY,
-            username TEXT UNIQUE,
-            password TEXT
-        )
-    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS admins (
+                id SERIAL PRIMARY KEY,
+                username TEXT UNIQUE,
+                password TEXT
+            )
+        """)
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        conn.commit()
+        cur.close()
+        conn.close()
 
+        print("DB initialized successfully")
 
-init_db()
+    except Exception as e:
+        print("DB init error:", e)
 
+# IMPORTANT: only run after safe env check
+if os.environ.get("DATABASE_URL"):
+    init_db()
+else:
+    print("DATABASE_URL not set yet, skipping DB init")
 
-# =========================
+# ==============================
 # HOME
-# =========================
+# ==============================
 @app.route("/")
 def index():
     conn = get_db()
@@ -116,12 +100,15 @@ def index():
 
     conn.close()
 
-    return render_template("index.html", featured_products=featured_products, news=news, config=globals())
+    return render_template(
+        "index.html",
+        featured_products=featured_products,
+        news=news
+    )
 
-
-# =========================
+# ==============================
 # SHOP
-# =========================
+# ==============================
 @app.route("/shop")
 def shop():
     conn = get_db()
@@ -149,12 +136,11 @@ def shop():
 
     conn.close()
 
-    return render_template("shop.html", products=products, categories=categories, config=globals())
+    return render_template("shop.html", products=products, categories=categories)
 
-
-# =========================
+# ==============================
 # PRODUCT
-# =========================
+# ==============================
 @app.route("/product/<int:id>")
 def product_detail(id):
     conn = get_db()
@@ -165,92 +151,11 @@ def product_detail(id):
 
     conn.close()
 
-    return render_template("product.html", product=product, config=globals())
+    return render_template("product.html", product=product)
 
-
-# =========================
-# CART
-# =========================
-@app.route("/cart")
-def cart():
-    cart = session.get("cart", {})
-    items = []
-    total = 0
-
-    if cart:
-        conn = get_db()
-        cur = conn.cursor()
-
-        for pid, qty in cart.items():
-            cur.execute("SELECT * FROM products WHERE id = %s", (pid,))
-            p = cur.fetchone()
-
-            if p:
-                price = float(p[2])
-                subtotal = price * qty
-
-                items.append({
-                    "id": pid,
-                    "name": p[1],
-                    "price": price,
-                    "qty": qty,
-                    "subtotal": subtotal
-                })
-
-                total += subtotal
-
-        conn.close()
-
-    return render_template("cart.html", cart_items=items, total=total, config=globals())
-
-
-# =========================
-# ADD TO CART
-# =========================
-@app.route("/add_to_cart/<int:id>", methods=["POST"])
-def add_to_cart(id):
-    cart = session.get("cart", {})
-    cart[str(id)] = cart.get(str(id), 0) + 1
-    session["cart"] = cart
-    return jsonify({"success": True})
-
-
-# =========================
-# CHECKOUT
-# =========================
-@app.route("/checkout")
-def checkout():
-    cart = session.get("cart", {})
-    items = []
-    total = 0
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    for pid, qty in cart.items():
-        cur.execute("SELECT * FROM products WHERE id = %s", (pid,))
-        p = cur.fetchone()
-
-        if p:
-            price = float(p[2])
-            subtotal = price * qty
-            items.append(p)
-            total += subtotal
-
-    conn.close()
-
-    msg = "Hello, I want to order:\n"
-    for i in items:
-        msg += f"- {i[1]} x{qty}\n"
-
-    whatsapp_link = f"https://wa.me/{os.environ.get('WHATSAPP_NUMBER', '')}?text={msg}"
-
-    return render_template("checkout.html", cart_items=items, total=total, whatsapp_link=whatsapp_link, config=globals())
-
-
-# =========================
-# ADMIN LOGIN (SIMPLE)
-# =========================
+# ==============================
+# ADMIN LOGIN
+# ==============================
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
@@ -271,12 +176,11 @@ def admin_login():
 
         return "Invalid login"
 
-    return render_template("admin_login.html", config=globals())
+    return render_template("admin_login.html")
 
-
-# =========================
+# ==============================
 # ADMIN DASHBOARD
-# =========================
+# ==============================
 @app.route("/admin/dashboard")
 @admin_required
 def admin_dashboard():
@@ -294,13 +198,11 @@ def admin_dashboard():
     return render_template(
         "admin_dashboard.html",
         total_products=total_products,
-        total_news=total_news,
-        config=globals()
+        total_news=total_news
     )
 
-
-# =========================
-# RUN
-# =========================
+# ==============================
+# RUN APP
+# ==============================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
